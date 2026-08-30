@@ -14,6 +14,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const connectDB = require('./config/db');
 const { initRedis, isRedisReady, closeRedis } = require('./config/redis');
 const RedisRateLimitStore = require('./middleware/rateLimitStore');
+const ApiError = require('./utils/apiError');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const authRoutes = require('./routes/authRoutes');
@@ -41,7 +42,7 @@ app.use(
       if (!origin || origin === process.env.CLIENT_URL) return callback(null, true);
       // In development, tolerate any localhost port since Vite falls back to the next free one.
       if (process.env.NODE_ENV !== 'production' && isLocalhostOrigin(origin)) return callback(null, true);
-      return callback(new Error('Not allowed by CORS'));
+      return callback(new ApiError(403, 'Not allowed by CORS'));
     },
     credentials: true,
   })
