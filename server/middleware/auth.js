@@ -16,7 +16,7 @@ const protect = asyncHandler(async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id).select('+passwordChangedAt');
 
     if (!user) {
       throw new ApiError(401, 'Not authorized, user no longer exists');
@@ -24,6 +24,10 @@ const protect = asyncHandler(async (req, res, next) => {
 
     if (!user.isActive) {
       throw new ApiError(403, 'This account has been deactivated');
+    }
+
+    if (user.passwordChangedAt && decoded.iat * 1000 < user.passwordChangedAt.getTime()) {
+      throw new ApiError(401, 'Password was recently changed. Please log in again.');
     }
 
     req.user = user;

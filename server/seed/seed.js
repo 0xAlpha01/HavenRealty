@@ -415,10 +415,17 @@ const seedDatabase = async () => {
     phone: process.env.ADMIN_PHONE || '+2348000000000',
     password: process.env.ADMIN_PASSWORD || 'change-me-now',
     role: 'admin',
+    emailVerified: true,
+    phoneVerified: true,
   });
   console.log(`Admin created: ${admin.email}`);
 
-  const agents = await User.insertMany(AGENTS);
+  // Created one-by-one via .create() (not insertMany) so each document runs
+  // through the pre('save') hook that hashes the password - insertMany
+  // bypasses Mongoose middleware and would silently store plaintext passwords.
+  const agents = await Promise.all(
+    AGENTS.map((agent) => User.create({ ...agent, emailVerified: true, phoneVerified: true }))
+  );
   console.log(`${agents.length} agents created.`);
 
   const properties = PROPERTY_TEMPLATES.map((template, index) => {
