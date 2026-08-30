@@ -38,6 +38,16 @@ const sendVerificationEmail = async (user, rawToken) => {
   });
 };
 
+// Fires the email in the background instead of blocking the HTTP response on
+// the SMTP round-trip. sendEmail() already catches its own errors, but this
+// .catch is a safety net in case that ever changes - a failed send must
+// never surface as an unhandled rejection or affect the response already sent.
+const sendVerificationEmailInBackground = (user, rawToken) => {
+  sendVerificationEmail(user, rawToken).catch((error) => {
+    console.error(`Failed to send verification email to ${user.email}: ${error.message}`);
+  });
+};
+
 const sendPhoneOtpSms = async (user, otp) => {
   await smsService.sendOTP(user.phone, otp);
 };
@@ -80,7 +90,9 @@ const register = asyncHandler(async (req, res) => {
   const emailToken = user.createEmailVerificationToken();
   await user.save();
 
-  await sendVerificationEmail(user, emailToken);
+  // The account already exists at this point - don't make the client wait
+  // on SMTP delivery, which can be slow or unreachable, to get its response.
+  sendVerificationEmailInBackground(user, emailToken);
 
   res.status(201).json({
     success: true,
@@ -208,7 +220,7 @@ const resendVerification = asyncHandler(async (req, res) => {
   if (user && !user.emailVerified) {
     const rawToken = user.createEmailVerificationToken();
     await user.save();
-    await sendVerificationEmail(user, rawToken);
+    sendVerificationEmailInBackground(user, rawToken);
   }
 
   res.status(200).json({ success: true, message: GENERIC_RESEND_MESSAGE });
@@ -325,10 +337,12 @@ const forgotPassword = asyncHandler(async (req, res) => {
     await user.save();
 
     const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${rawToken}`;
-    await sendEmail({
+    sendEmail({
       to: user.email,
       subject: 'Reset your Haven Realty password',
       html: passwordResetEmailTemplate({ name: user.fullName, resetUrl }),
+    }).catch((error) => {
+      console.error(`Failed to send password reset email to ${user.email}: ${error.message}`);
     });
   }
 

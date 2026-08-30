@@ -14,6 +14,12 @@ if (isSmtpConfigured) {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASSWORD,
     },
+    // Node sockets never time out on their own, so without these a slow or
+    // unreachable SMTP host (common for outbound mail from cloud hosts like
+    // Render) can hang the connection for minutes instead of failing fast.
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
 }
 
