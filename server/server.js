@@ -35,11 +35,16 @@ app.use(helmet({ crossOriginResourcePolicy: false }));
 
 const isLocalhostOrigin = (origin) => /^http:\/\/localhost:\d+$/.test(origin) || /^http:\/\/127\.0\.0\.1:\d+$/.test(origin);
 
+// Trims a trailing slash so a dashboard env var pasted as
+// "https://example.com/" still matches the browser's bare origin.
+const normalizeOrigin = (value) => (value || '').trim().replace(/\/$/, '');
+const CLIENT_ORIGIN = normalizeOrigin(process.env.CLIENT_URL);
+
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow non-browser requests (no Origin header) and the configured client URL always.
-      if (!origin || origin === process.env.CLIENT_URL) return callback(null, true);
+      if (!origin || normalizeOrigin(origin) === CLIENT_ORIGIN) return callback(null, true);
       // In development, tolerate any localhost port since Vite falls back to the next free one.
       if (process.env.NODE_ENV !== 'production' && isLocalhostOrigin(origin)) return callback(null, true);
       return callback(new ApiError(403, 'Not allowed by CORS'));
