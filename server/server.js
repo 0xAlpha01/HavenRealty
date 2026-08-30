@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -11,6 +12,8 @@ const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 
 const connectDB = require('./config/db');
+const { initRedis, isRedisReady, closeRedis } = require('./config/redis');
+const RedisRateLimitStore = require('./middleware/rateLimitStore');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const authRoutes = require('./routes/authRoutes');
@@ -23,6 +26,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 
 connectDB();
+initRedis();
 
 const app = express();
 
@@ -56,6 +60,7 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests, please try again later' },
+  store: new RedisRateLimitStore({ prefix: 'rl:api:' }),
 });
 app.use('/api', apiLimiter);
 
@@ -65,6 +70,7 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many attempts, please try again later' },
+  store: new RedisRateLimitStore({ prefix: 'rl:auth:' }),
 });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
@@ -72,7 +78,12 @@ app.use('/api/auth/register', authLimiter);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ success: true, message: 'API is running' });
+  res.status(200).json({
+    success: true,
+    message: 'API is running',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    redis: isRedisReady() ? 'connected' : 'disconnected',
+  });
 });
 
 app.use('/api/auth', authRoutes);
@@ -89,10 +100,22 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });
 
 process.on('unhandledRejection', (err) => {
   console.error(`Unhandled rejection: ${err.message}`);
 });
+
+const shutdown = async (signal) => {
+  console.log(`${signal} received - shutting down gracefully`);
+  server.close(async () => {
+    await closeRedis();
+    await mongoose.connection.close();
+    process.exit(0);
+  });
+};
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));

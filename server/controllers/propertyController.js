@@ -2,6 +2,14 @@ const asyncHandler = require('../middleware/asyncHandler');
 const ApiError = require('../utils/apiError');
 const Property = require('../models/Property');
 const { uploadImage, deleteImage } = require('../utils/uploadImage');
+const { buildKey, getCache, setCache, invalidateByPrefix } = require('../services/cacheService');
+
+const PROPERTIES_CACHE_PREFIX = 'properties';
+const LIST_TTL_SECONDS = 120;
+const FEATURED_TTL_SECONDS = 300;
+const CATEGORIES_TTL_SECONDS = 300;
+
+const invalidatePropertiesCache = () => invalidateByPrefix(PROPERTIES_CACHE_PREFIX);
 
 const SORT_OPTIONS = {
   newest: { createdAt: -1 },
@@ -61,6 +69,12 @@ const buildFilterQuery = (query, { publicOnly = true } = {}) => {
 // @route   GET /api/properties
 // @access  Public
 const getProperties = asyncHandler(async (req, res) => {
+  const cacheKey = buildKey(`${PROPERTIES_CACHE_PREFIX}:list`, req.query);
+  const cached = await getCache(cacheKey);
+  if (cached) {
+    return res.status(200).json(cached);
+  }
+
   const page = Math.max(Number(req.query.page) || 1, 1);
   const limit = Math.min(Math.max(Number(req.query.limit) || 12, 1), 50);
   const skip = (page - 1) * limit;
@@ -73,32 +87,49 @@ const getProperties = asyncHandler(async (req, res) => {
     Property.countDocuments(filter),
   ]);
 
-  res.status(200).json({
+  const payload = {
     success: true,
     properties,
     page,
     pages: Math.max(Math.ceil(total / limit), 1),
     total,
-  });
+  };
+
+  await setCache(cacheKey, payload, LIST_TTL_SECONDS);
+  res.status(200).json(payload);
 });
 
 // @desc    Get featured properties
 // @route   GET /api/properties/featured
 // @access  Public
 const getFeaturedProperties = asyncHandler(async (req, res) => {
+  const cacheKey = buildKey(`${PROPERTIES_CACHE_PREFIX}:featured`, req.query);
+  const cached = await getCache(cacheKey);
+  if (cached) {
+    return res.status(200).json(cached);
+  }
+
   const limit = Math.min(Number(req.query.limit) || 6, 20);
   const properties = await Property.find({ status: 'approved', isFeatured: true })
     .sort({ createdAt: -1 })
     .limit(limit)
     .populate('owner', 'fullName email phone avatar role');
 
-  res.status(200).json({ success: true, data: properties });
+  const payload = { success: true, data: properties };
+  await setCache(cacheKey, payload, FEATURED_TTL_SECONDS);
+  res.status(200).json(payload);
 });
 
 // @desc    Get counts of properties grouped by type (for category section)
 // @route   GET /api/properties/categories
 // @access  Public
 const getPropertyCategoryCounts = asyncHandler(async (req, res) => {
+  const cacheKey = `${PROPERTIES_CACHE_PREFIX}:categories:all`;
+  const cached = await getCache(cacheKey);
+  if (cached) {
+    return res.status(200).json(cached);
+  }
+
   const counts = await Property.aggregate([
     { $match: { status: 'approved' } },
     { $group: { _id: '$propertyType', count: { $sum: 1 } } },
@@ -109,7 +140,9 @@ const getPropertyCategoryCounts = asyncHandler(async (req, res) => {
     return acc;
   }, {});
 
-  res.status(200).json({ success: true, data: result });
+  const payload = { success: true, data: result };
+  await setCache(cacheKey, payload, CATEGORIES_TTL_SECONDS);
+  res.status(200).json(payload);
 });
 
 // @desc    Get logged-in user's properties
@@ -224,6 +257,8 @@ const createProperty = asyncHandler(async (req, res) => {
     status: 'pending',
   });
 
+  await invalidatePropertiesCache();
+
   res.status(201).json({
     success: true,
     message: 'Property submitted successfully and is pending approval',
@@ -311,6 +346,7 @@ const updateProperty = asyncHandler(async (req, res) => {
   }
 
   await property.save();
+  await invalidatePropertiesCache();
 
   res.status(200).json({
     success: true,
@@ -336,6 +372,7 @@ const deleteProperty = asyncHandler(async (req, res) => {
 
   await Promise.all(property.images.map((img) => deleteImage(img.publicId)));
   await property.deleteOne();
+  await invalidatePropertiesCache();
 
   res.status(200).json({ success: true, message: 'Property deleted successfully' });
 });

@@ -4,6 +4,9 @@ const User = require('../models/User');
 const Property = require('../models/Property');
 const Inquiry = require('../models/Inquiry');
 const sendEmail = require('../utils/sendEmail');
+const { invalidateByPrefix } = require('../services/cacheService');
+
+const invalidatePropertiesCache = () => invalidateByPrefix('properties');
 
 // @desc    Get platform statistics for admin dashboard
 // @route   GET /api/admin/stats
@@ -137,6 +140,7 @@ const approveProperty = asyncHandler(async (req, res) => {
   property.status = 'approved';
   property.rejectionReason = '';
   await property.save();
+  await invalidatePropertiesCache();
 
   sendEmail({
     to: property.owner.email,
@@ -159,6 +163,7 @@ const rejectProperty = asyncHandler(async (req, res) => {
   property.status = 'rejected';
   property.rejectionReason = req.body.reason || 'Did not meet platform guidelines';
   await property.save();
+  await invalidatePropertiesCache();
 
   sendEmail({
     to: property.owner.email,
@@ -179,6 +184,7 @@ const adminDeleteProperty = asyncHandler(async (req, res) => {
   }
 
   await property.deleteOne();
+  await invalidatePropertiesCache();
   res.status(200).json({ success: true, message: 'Property deleted successfully' });
 });
 
