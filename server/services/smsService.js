@@ -24,6 +24,9 @@ const sendSms = async (phoneNumber, message) => {
         channel: 'generic',
         api_key: process.env.TERMII_API_KEY,
       }),
+      // A slow/unreachable Termii endpoint must never hang the request that
+      // triggered it - fail fast instead, same as the SMTP timeout fix.
+      signal: AbortSignal.timeout(10000),
     });
 
     const data = await response.json().catch(() => ({}));

@@ -59,4 +59,22 @@ const passwordResetEmailTemplate = ({ name, resetUrl, expiresInMinutes = 15 }) =
     </p>
   `);
 
-module.exports = { verificationEmailTemplate, passwordResetEmailTemplate };
+const phoneOtpEmailTemplate = ({ name, otp, maskedPhone, expiresInMinutes = 10 }) =>
+  emailShell(`
+    <h2 style="margin:0 0 16px;font-size:20px;color:#16233c;">Your phone verification code</h2>
+    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;">Hi ${name},</p>
+    <p style="margin:0 0 24px;font-size:14px;line-height:1.6;">
+      We weren't able to deliver this code by SMS to ${maskedPhone}, so we're sending it by email instead.
+      Enter this code to verify your phone number:
+    </p>
+    <div style="text-align:center;margin:0 0 24px;">
+      <span style="display:inline-block;background-color:#f9fafb;border:1px solid #e5e7eb;color:#16233c;font-weight:800;font-size:28px;letter-spacing:6px;padding:16px 24px;border-radius:8px;">
+        ${otp}
+      </span>
+    </div>
+    <p style="margin:20px 0 0;font-size:12px;color:#9ca3af;">
+      This code expires in ${expiresInMinutes} minutes. For your security, never share this code with anyone.
+    </p>
+  `);
+
+module.exports = { verificationEmailTemplate, passwordResetEmailTemplate, phoneOtpEmailTemplate };

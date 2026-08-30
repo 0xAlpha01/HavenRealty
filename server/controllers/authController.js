@@ -6,7 +6,11 @@ const sendEmail = require('../utils/sendEmail');
 const smsService = require('../services/smsService');
 const { uploadImage, deleteImage } = require('../utils/uploadImage');
 const { hashValue, maskPhone } = require('../utils/tokens');
-const { verificationEmailTemplate, passwordResetEmailTemplate } = require('../utils/emailTemplates');
+const {
+  verificationEmailTemplate,
+  passwordResetEmailTemplate,
+  phoneOtpEmailTemplate,
+} = require('../utils/emailTemplates');
 
 const sanitizeUser = (user) => user.toSafeObject();
 
@@ -48,8 +52,26 @@ const sendVerificationEmailInBackground = (user, rawToken) => {
   });
 };
 
+// Tries SMS first; if that's skipped (Termii not configured, not approved,
+// or the send failed) falls back to emailing the code, so verification still
+// works while SMS delivery is unavailable.
 const sendPhoneOtpSms = async (user, otp) => {
-  await smsService.sendOTP(user.phone, otp);
+  const result = await smsService.sendOTP(user.phone, otp);
+  if (result.skipped) {
+    await sendEmail({
+      to: user.email,
+      subject: 'Your Haven Realty phone verification code',
+      html: phoneOtpEmailTemplate({ name: user.fullName, otp, maskedPhone: maskPhone(user.phone) }),
+    });
+  }
+};
+
+// Fire-and-forget: both delivery paths already catch their own errors, but
+// the caller's HTTP response must never wait on SMS/email round-trips.
+const sendPhoneOtpInBackground = (user, otp) => {
+  sendPhoneOtpSms(user, otp).catch((error) => {
+    console.error(`Failed to deliver phone OTP to ${user.email}: ${error.message}`);
+  });
 };
 
 // @desc    Register a new user
@@ -244,11 +266,11 @@ const sendPhoneOtp = asyncHandler(async (req, res) => {
 
   const otp = user.createPhoneVerificationOTP();
   await user.save();
-  await sendPhoneOtpSms(user, otp);
+  sendPhoneOtpInBackground(user, otp);
 
   res.status(200).json({
     success: true,
-    message: `A verification code has been sent to ${maskPhone(user.phone)}.`,
+    message: `A verification code has been sent to ${maskPhone(user.phone)}. If SMS delivery isn't available, we'll email it to you instead.`,
     data: { maskedPhone: maskPhone(user.phone) },
   });
 });
