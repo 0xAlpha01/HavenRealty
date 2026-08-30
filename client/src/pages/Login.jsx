@@ -42,9 +42,7 @@ const Login = () => {
     } catch (error) {
       const responseData = error?.response?.data?.data;
       if (responseData?.requiresEmailVerification) {
-        setVerificationNotice({ type: 'email', email: responseData.email });
-      } else if (responseData?.requiresPhoneVerification) {
-        setVerificationNotice({ type: 'phone', email: responseData.email });
+        setVerificationNotice({ email: responseData.email });
       }
       toast.error(getErrorMessage(error));
     } finally {
@@ -108,32 +106,15 @@ const Login = () => {
 
           {verificationNotice && (
             <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-              {verificationNotice.type === 'email' ? (
-                <>
-                  <p>Your email address hasn&apos;t been verified yet.</p>
-                  <button
-                    type="button"
-                    onClick={handleResendVerification}
-                    disabled={resending}
-                    className="mt-1.5 font-semibold underline disabled:opacity-60"
-                  >
-                    {resending ? 'Sending...' : 'Resend Verification Email'}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p>Your phone number hasn&apos;t been verified yet.</p>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate(`/verify-phone?email=${encodeURIComponent(verificationNotice.email)}`)
-                    }
-                    className="mt-1.5 font-semibold underline"
-                  >
-                    Verify Phone Number
-                  </button>
-                </>
-              )}
+              <p>Your email address hasn&apos;t been verified yet.</p>
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={resending}
+                className="mt-1.5 font-semibold underline disabled:opacity-60"
+              >
+                {resending ? 'Sending...' : 'Resend Verification Email'}
+              </button>
             </div>
           )}
 

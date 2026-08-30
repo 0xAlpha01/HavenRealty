@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Mail, MapPin, Phone } from 'lucide-react';
+import { BadgeCheck, Mail, MapPin, Phone } from 'lucide-react';
 
 const AgentCard = ({ agent }) => (
   <div className="card flex flex-col items-center p-6 text-center">
@@ -12,13 +12,21 @@ const AgentCard = ({ agent }) => (
         </div>
       )}
     </div>
-    <h3 className="mt-4 text-base font-semibold text-navy-900">{agent.fullName}</h3>
+    <h3 className="mt-4 flex items-center gap-1 text-base font-semibold text-navy-900">
+      {agent.fullName}
+      {agent.phoneVerified && <BadgeCheck size={16} className="text-emerald-600" aria-label="Verified phone" />}
+    </h3>
     {agent.location && (
       <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
         <MapPin size={13} /> {agent.location}
       </p>
     )}
     <p className="mt-2 text-xs font-medium text-gold-600">{agent.propertiesCount || 0} properties listed</p>
+    {agent.phoneVerified && (
+      <span className="badge mt-1.5 bg-emerald-50 text-emerald-700">
+        <BadgeCheck size={12} className="mr-1" /> Verified Phone
+      </span>
+    )}
 
     <div className="mt-4 w-full space-y-1.5 border-t border-gray-100 pt-4 text-left text-xs text-slate-500">
       {agent.phone && (

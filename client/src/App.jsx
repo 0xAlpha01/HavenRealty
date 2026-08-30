@@ -19,7 +19,6 @@ const About = lazy(() => import('./pages/About'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
-const VerifyAccount = lazy(() => import('./pages/VerifyAccount'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const VerifyPhone = lazy(() => import('./pages/VerifyPhone'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -58,14 +57,16 @@ const App = () => (
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/verify-account" element={<VerifyAccount />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/verify-phone" element={<VerifyPhone />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
+            <Route path="/verify-phone" element={<VerifyPhone />} />
+          </Route>
+
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<DashboardOverview />} />
             <Route path="/dashboard/properties" element={<MyProperties />} />

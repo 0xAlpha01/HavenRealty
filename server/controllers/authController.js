@@ -73,15 +73,18 @@ const register = asyncHandler(async (req, res) => {
     role: 'user',
   });
 
+  // Only email verification is required to use the platform - phone
+  // verification is an optional trust signal a user can add later from
+  // their profile, so no OTP is sent (and Termii isn't touched) at
+  // registration time.
   const emailToken = user.createEmailVerificationToken();
-  const phoneOtp = user.createPhoneVerificationOTP();
   await user.save();
 
-  await Promise.all([sendVerificationEmail(user, emailToken), sendPhoneOtpSms(user, phoneOtp)]);
+  await sendVerificationEmail(user, emailToken);
 
   res.status(201).json({
     success: true,
-    message: 'Registration successful. Please verify your email and phone number to activate your account.',
+    message: 'Registration successful. Please verify your email to activate your account.',
     data: { userId: user._id, email: user.email, phone: user.phone },
   });
 });
@@ -118,14 +121,8 @@ const login = asyncHandler(async (req, res) => {
     });
   }
 
-  if (!user.phoneVerified) {
-    return res.status(403).json({
-      success: false,
-      message: 'Please verify your phone number before logging in.',
-      data: { requiresPhoneVerification: true, email: user.email, maskedPhone: maskPhone(user.phone) },
-    });
-  }
-
+  // Phone verification is optional and never gates login - only email
+  // verification is required.
   const token = generateToken(user._id);
 
   res.status(200).json({

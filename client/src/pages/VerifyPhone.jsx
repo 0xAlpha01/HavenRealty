@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import { Building2, ShieldCheck } from 'lucide-react';
@@ -7,14 +7,15 @@ import OtpInput from '../components/ui/OtpInput';
 import Button from '../components/ui/Button';
 import authService from '../services/authService';
 import { getErrorMessage } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const RESEND_COOLDOWN_SECONDS = 45;
 
 const VerifyPhone = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const email = searchParams.get('email') || '';
-  const phone = searchParams.get('phone') || '';
+  const { user, updateUser } = useAuth();
+  const email = user?.email || '';
+  const phone = user?.phone || '';
 
   const [otp, setOtp] = useState('');
   const [verifying, setVerifying] = useState(false);
@@ -24,8 +25,9 @@ const VerifyPhone = () => {
 
   useEffect(() => {
     document.title = 'Verify Phone Number | Haven Realty';
-    if (!email) {
-      navigate('/register', { replace: true });
+
+    if (user?.phoneVerified) {
+      navigate('/dashboard/profile', { replace: true });
       return;
     }
 
@@ -34,7 +36,7 @@ const VerifyPhone = () => {
       .then(() => setSentOnce(true))
       .catch((error) => toast.error(getErrorMessage(error)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email]);
+  }, []);
 
   useEffect(() => {
     if (cooldown <= 0) return undefined;
@@ -53,9 +55,8 @@ const VerifyPhone = () => {
     try {
       await authService.verifyPhoneOtp(email, otp);
       toast.success('Phone number verified successfully');
-      navigate(`/verify-account?email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}`, {
-        replace: true,
-      });
+      updateUser({ ...user, phoneVerified: true });
+      navigate('/dashboard/profile', { replace: true });
     } catch (error) {
       toast.error(getErrorMessage(error));
       setOtp('');
@@ -104,8 +105,11 @@ const VerifyPhone = () => {
               ? `We sent a 6-digit verification code to ${phone || 'your phone'}.`
               : 'Sending your verification code...'}
           </p>
+          <p className="mt-3 rounded-lg bg-gold-50 px-3 py-2 text-xs text-gold-700">
+            Verified phone numbers help clients feel more confident when contacting you. This step is optional.
+          </p>
 
-          <form onSubmit={handleVerify} className="mt-8 space-y-6">
+          <form onSubmit={handleVerify} className="mt-6 space-y-6">
             <OtpInput value={otp} onChange={setOtp} disabled={verifying} />
 
             <Button type="submit" loading={verifying} className="w-full">
@@ -124,11 +128,8 @@ const VerifyPhone = () => {
         </div>
 
         <p className="mt-6 text-center text-sm text-slate-500">
-          <Link
-            to={`/verify-account?email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}`}
-            className="font-semibold text-navy-800 hover:underline"
-          >
-            Back to verification status
+          <Link to="/dashboard/profile" className="font-semibold text-navy-800 hover:underline">
+            Back to Profile
           </Link>
         </p>
       </motion.div>

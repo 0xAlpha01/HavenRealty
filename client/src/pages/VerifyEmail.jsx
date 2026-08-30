@@ -2,43 +2,46 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
-import { Building2, CheckCircle2, Loader2, XCircle } from 'lucide-react';
+import { Building2, CheckCircle2, Loader2, MailCheck, XCircle } from 'lucide-react';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import authService from '../services/authService';
 import { getErrorMessage } from '../services/api';
 
+const RESEND_COOLDOWN_SECONDS = 45;
+
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token');
+  const emailFromQuery = searchParams.get('email') || '';
 
-  const [state, setState] = useState('checking'); // checking | success | error
+  // pending (just registered, no token yet) | checking | success | error
+  const [state, setState] = useState(token ? 'checking' : 'pending');
   const [message, setMessage] = useState('');
-  const [result, setResult] = useState(null);
-  const [resendEmail, setResendEmail] = useState('');
+  const [resendEmail, setResendEmail] = useState(emailFromQuery);
   const [resending, setResending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
     document.title = 'Verify Email | Haven Realty';
 
-    if (!token) {
-      setState('error');
-      setMessage('Verification link is invalid or has expired.');
-      return;
-    }
+    if (!token) return;
 
     authService
       .verifyEmail(token)
-      .then((res) => {
-        setState('success');
-        setResult(res.data);
-      })
+      .then(() => setState('success'))
       .catch((error) => {
         setState('error');
         setMessage(getErrorMessage(error));
       });
   }, [token]);
+
+  useEffect(() => {
+    if (cooldown <= 0) return undefined;
+    const timer = setTimeout(() => setCooldown((prev) => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
 
   const handleResend = async (e) => {
     e.preventDefault();
@@ -48,20 +51,11 @@ const VerifyEmail = () => {
     try {
       await authService.resendVerification(resendEmail);
       toast.success('If that account exists, a new verification email has been sent.');
+      setCooldown(RESEND_COOLDOWN_SECONDS);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
       setResending(false);
-    }
-  };
-
-  const handleContinue = () => {
-    if (result?.phoneVerified) {
-      navigate('/login');
-    } else {
-      navigate(
-        `/verify-account?email=${encodeURIComponent(result?.email || '')}&phone=${encodeURIComponent(result?.phone || '')}`
-      );
     }
   };
 
@@ -82,6 +76,35 @@ const VerifyEmail = () => {
         </div>
 
         <div className="card p-8 text-center">
+          {state === 'pending' && (
+            <>
+              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-navy-50 text-navy-700">
+                <MailCheck size={26} />
+              </span>
+              <h1 className="mt-4 text-xl font-bold text-navy-900">Verify your email</h1>
+              <p className="mt-2 text-sm text-slate-500">
+                We&apos;ve sent a verification link to{' '}
+                {emailFromQuery ? <span className="font-medium text-navy-800">{emailFromQuery}</span> : 'your email address'}.
+                Please verify your email before continuing.
+              </p>
+
+              <form onSubmit={handleResend} className="mt-6 space-y-3 text-left">
+                <Input
+                  label="Email address"
+                  id="resendEmail"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={resendEmail}
+                  onChange={(e) => setResendEmail(e.target.value)}
+                  required
+                />
+                <Button type="submit" loading={resending} disabled={cooldown > 0} className="w-full">
+                  {cooldown > 0 ? `Resend available in ${cooldown}s` : 'Resend Verification Email'}
+                </Button>
+              </form>
+            </>
+          )}
+
           {state === 'checking' && (
             <>
               <Loader2 size={40} className="mx-auto animate-spin text-navy-600" />
@@ -95,9 +118,9 @@ const VerifyEmail = () => {
                 <CheckCircle2 size={28} />
               </span>
               <h1 className="mt-4 text-xl font-bold text-navy-900">Email verified successfully</h1>
-              <p className="mt-2 text-sm text-slate-500">You can now continue setting up your account.</p>
-              <Button className="mt-6 w-full" onClick={handleContinue}>
-                Continue
+              <p className="mt-2 text-sm text-slate-500">You can now log in to your Haven Realty account.</p>
+              <Button className="mt-6 w-full" onClick={() => navigate('/login')}>
+                Continue to Login
               </Button>
             </>
           )}
@@ -120,8 +143,8 @@ const VerifyEmail = () => {
                   onChange={(e) => setResendEmail(e.target.value)}
                   required
                 />
-                <Button type="submit" loading={resending} className="w-full">
-                  Resend Verification Email
+                <Button type="submit" loading={resending} disabled={cooldown > 0} className="w-full">
+                  {cooldown > 0 ? `Resend available in ${cooldown}s` : 'Resend Verification Email'}
                 </Button>
               </form>
             </>

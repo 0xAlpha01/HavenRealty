@@ -12,7 +12,7 @@ const getAgents = asyncHandler(async (req, res) => {
   const agents = await User.find({
     $or: [{ isAgent: true }, { role: 'agent' }, { _id: { $in: propertyOwnerIds } }],
     isActive: true,
-  }).select('fullName email phone avatar bio location createdAt');
+  }).select('fullName email phone avatar bio location phoneVerified createdAt');
 
   const agentsWithCounts = await Promise.all(
     agents.map(async (agent) => {
@@ -29,7 +29,7 @@ const getAgents = asyncHandler(async (req, res) => {
 // @access  Public
 const getAgentById = asyncHandler(async (req, res) => {
   const agent = await User.findById(req.params.id).select(
-    'fullName email phone avatar bio location createdAt'
+    'fullName email phone avatar bio location phoneVerified createdAt'
   );
 
   if (!agent) {
