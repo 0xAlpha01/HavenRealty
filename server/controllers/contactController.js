@@ -12,10 +12,15 @@ const submitContactMessage = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'All fields are required');
   }
 
-  await sendEmail({
-    to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
+  // Don't make the sender wait on the outbound email round-trip - the
+  // message is only useful to us, so any delivery failure is ours to deal
+  // with, not something that should slow down the visitor's response.
+  sendEmail({
+    to: process.env.ADMIN_EMAIL,
     subject: `[Contact Form] ${subject}`,
     html: `<p><strong>From:</strong> ${name} (${email})</p><p>${message}</p>`,
+  }).catch((error) => {
+    console.error(`Failed to send contact form email: ${error.message}`);
   });
 
   res.status(200).json({ success: true, message: 'Your message has been sent. We will get back to you shortly.' });
