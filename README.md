@@ -124,6 +124,7 @@ npm run seed          # seed the database
 npm run seed:destroy  # wipe all collections without reseeding
 ```
 
+
 ## Running the Application
 
 From the project root (runs both apps together via `concurrently`):
