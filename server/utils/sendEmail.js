@@ -20,6 +20,11 @@ if (isSmtpConfigured) {
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 15000,
+    // Gmail's SMTP host resolves to both an IPv4 and IPv6 address. Unlike
+    // fetch()'s automatic Happy-Eyeballs fallback, a raw socket connection
+    // doesn't retry the other family - on a network with broken IPv6 routing
+    // this fails outright (ENETUNREACH) instead of falling back to IPv4.
+    family: 4,
   });
 }
 
