@@ -108,7 +108,7 @@ const PROPERTY_TEMPLATES = [
     state: 'Lagos',
     bedrooms: 3,
     bathrooms: 3,
-    parkingSpaces: 2,
+    parkingSpaces: 8,
     area: 250,
     yearBuilt: 2021,
     description:
