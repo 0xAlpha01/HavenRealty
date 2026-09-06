@@ -23,8 +23,8 @@
     "mongoose": "^8.5.1",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
-    "nodemailer": "^9.1.0",
     "redis": "^6.2.1",
+    "resend": "^6.25.0",
     "streamifier": "^0.1.1",
     "validator": "^13.12.0"
   },
