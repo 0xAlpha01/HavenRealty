@@ -87,6 +87,9 @@ const VerifyEmail = () => {
                 {emailFromQuery ? <span className="font-medium text-navy-800">{emailFromQuery}</span> : 'your email address'}.
                 Please verify your email before continuing.
               </p>
+              <p className="mt-2 text-xs text-slate-400">
+                Delivery can occasionally take up to 10-15 minutes. Please check your spam folder before requesting a new link.
+              </p>
 
               <form onSubmit={handleResend} className="mt-6 space-y-3 text-left">
                 <Input
