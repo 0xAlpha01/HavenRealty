@@ -1,6 +1,6 @@
 const asyncHandler = require('../middleware/asyncHandler');
 const ApiError = require('../utils/apiError');
-const sendEmail = require('../utils/sendEmail');
+const sendEmail = require('../services/emailService');
 
 // @desc    Submit a general contact message
 // @route   POST /api/contact

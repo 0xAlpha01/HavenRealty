@@ -83,10 +83,11 @@ CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 
 SMTP_HOST=
-SMTP_PORT=587
+SMTP_PORT=465
+SMTP_SECURE=true
 SMTP_USER=
-SMTP_PASSWORD=
-SMTP_FROM="Real Estate Platform <no-reply@realestate.local>"
+SMTP_PASS=
+EMAIL_FROM="Real Estate Platform <no-reply@realestate.local>"
 
 CLIENT_URL=http://localhost:5173
 

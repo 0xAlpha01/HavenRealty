@@ -2,7 +2,7 @@ const asyncHandler = require('../middleware/asyncHandler');
 const ApiError = require('../utils/apiError');
 const Inquiry = require('../models/Inquiry');
 const Property = require('../models/Property');
-const sendEmail = require('../utils/sendEmail');
+const sendEmail = require('../services/emailService');
 
 // @desc    Create a property inquiry
 // @route   POST /api/inquiries

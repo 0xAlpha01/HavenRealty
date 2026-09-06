@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 const isSmtpConfigured = Boolean(
-  process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD
+  process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS
 );
 
 let transporter;
@@ -9,10 +9,10 @@ if (isSmtpConfigured) {
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT) || 587,
-    secure: Number(process.env.SMTP_PORT) === 465,
+    secure: process.env.SMTP_SECURE === 'true',
     auth: {
       user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
+      pass: process.env.SMTP_PASS,
     },
     // Node sockets never time out on their own, so without these a slow or
     // unreachable SMTP host (common for outbound mail from cloud hosts like
@@ -38,7 +38,7 @@ const sendEmail = async ({ to, subject, html }) => {
 
   try {
     await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      from: process.env.EMAIL_FROM || process.env.SMTP_USER,
       to,
       subject,
       html,

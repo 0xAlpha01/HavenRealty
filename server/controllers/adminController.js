@@ -3,7 +3,7 @@ const ApiError = require('../utils/apiError');
 const User = require('../models/User');
 const Property = require('../models/Property');
 const Inquiry = require('../models/Inquiry');
-const sendEmail = require('../utils/sendEmail');
+const sendEmail = require('../services/emailService');
 const { invalidateByPrefix } = require('../services/cacheService');
 
 const invalidatePropertiesCache = () => invalidateByPrefix('properties');
