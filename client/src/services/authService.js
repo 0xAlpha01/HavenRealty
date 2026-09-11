@@ -11,11 +11,6 @@ const getMe = () => api.get('/auth/me').then((res) => res.data);
 const getVerificationStatus = (email) =>
   api.get('/auth/verification-status', { params: { email } }).then((res) => res.data);
 
-const verifyEmail = (token) => api.post('/auth/verify-email', { token }).then((res) => res.data);
-
-const resendVerification = (email) =>
-  api.post('/auth/resend-verification', { email }).then((res) => res.data);
-
 const sendPhoneOtp = (email) => api.post('/auth/send-phone-otp', { email }).then((res) => res.data);
 
 const resendPhoneOtp = (email) => api.post('/auth/resend-phone-otp', { email }).then((res) => res.data);
@@ -42,8 +37,6 @@ export default {
   logout,
   getMe,
   getVerificationStatus,
-  verifyEmail,
-  resendVerification,
   sendPhoneOtp,
   resendPhoneOtp,
   verifyPhoneOtp,

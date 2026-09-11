@@ -45,8 +45,8 @@ export const AuthProvider = ({ children }) => {
     return res.data.user;
   };
 
-  // Registration no longer logs the user in immediately - the account must
-  // complete email + phone verification before a session is issued at login.
+  // Registration doesn't log the user in immediately - they log in separately
+  // afterward.
   const register = async (payload) => {
     const res = await authService.register(payload);
     return res.data;

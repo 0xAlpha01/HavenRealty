@@ -32,9 +32,9 @@ const Register = () => {
   const onSubmit = async (data) => {
     setSubmitting(true);
     try {
-      const result = await registerUser(data);
-      toast.success('Registration successful. Please verify your email to continue.');
-      navigate(`/verify-email?email=${encodeURIComponent(result.email)}`, { replace: true });
+      await registerUser(data);
+      toast.success('Registration successful. You can now log in.');
+      navigate('/login', { replace: true });
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {

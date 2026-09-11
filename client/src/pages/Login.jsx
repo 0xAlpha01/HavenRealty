@@ -6,7 +6,6 @@ import { Building2 } from 'lucide-react';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
-import authService from '../services/authService';
 import { getErrorMessage } from '../services/api';
 
 const Login = () => {
@@ -14,8 +13,6 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [submitting, setSubmitting] = useState(false);
-  const [resending, setResending] = useState(false);
-  const [verificationNotice, setVerificationNotice] = useState(null);
 
   const {
     register,
@@ -34,32 +31,14 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     setSubmitting(true);
-    setVerificationNotice(null);
     try {
       await login(data);
       toast.success('Login successful');
       navigate(location.state?.from?.pathname || '/dashboard', { replace: true });
     } catch (error) {
-      const responseData = error?.response?.data?.data;
-      if (responseData?.requiresEmailVerification) {
-        setVerificationNotice({ email: responseData.email });
-      }
       toast.error(getErrorMessage(error));
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleResendVerification = async () => {
-    if (!verificationNotice?.email) return;
-    setResending(true);
-    try {
-      await authService.resendVerification(verificationNotice.email);
-      toast.success('Verification email sent. Please check your inbox.');
-    } catch (error) {
-      toast.error(getErrorMessage(error));
-    } finally {
-      setResending(false);
     }
   };
 
@@ -103,20 +82,6 @@ const Login = () => {
               Forgot password?
             </Link>
           </div>
-
-          {verificationNotice && (
-            <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-              <p>Your email address hasn&apos;t been verified yet.</p>
-              <button
-                type="button"
-                onClick={handleResendVerification}
-                disabled={resending}
-                className="mt-1.5 font-semibold underline disabled:opacity-60"
-              >
-                {resending ? 'Sending...' : 'Resend Verification Email'}
-              </button>
-            </div>
-          )}
 
           <Button type="submit" loading={submitting} className="w-full">
             Login
