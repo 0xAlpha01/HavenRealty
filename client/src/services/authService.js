@@ -8,16 +8,6 @@ const logout = () => api.post('/auth/logout').then((res) => res.data);
 
 const getMe = () => api.get('/auth/me').then((res) => res.data);
 
-const getVerificationStatus = (email) =>
-  api.get('/auth/verification-status', { params: { email } }).then((res) => res.data);
-
-const sendPhoneOtp = (email) => api.post('/auth/send-phone-otp', { email }).then((res) => res.data);
-
-const resendPhoneOtp = (email) => api.post('/auth/resend-phone-otp', { email }).then((res) => res.data);
-
-const verifyPhoneOtp = (email, otp) =>
-  api.post('/auth/verify-phone-otp', { email, otp }).then((res) => res.data);
-
 const forgotPassword = (email) => api.post('/auth/forgot-password', { email }).then((res) => res.data);
 
 const resetPassword = (payload) => api.post('/auth/reset-password', payload).then((res) => res.data);
@@ -36,10 +26,6 @@ export default {
   login,
   logout,
   getMe,
-  getVerificationStatus,
-  sendPhoneOtp,
-  resendPhoneOtp,
-  verifyPhoneOtp,
   forgotPassword,
   resetPassword,
   updateProfile,

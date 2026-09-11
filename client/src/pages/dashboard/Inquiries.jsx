@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Inbox, Mail, Phone, ShieldCheck } from 'lucide-react';
+import { Inbox, Mail, Phone } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import Select from '../../components/ui/Select';
 import EmptyState from '../../components/ui/EmptyState';
@@ -9,7 +9,6 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import inquiryService from '../../services/inquiryService';
 import { getErrorMessage } from '../../services/api';
 import { formatDate } from '../../utils/formatters';
-import { useAuth } from '../../context/AuthContext';
 
 const STATUS_OPTIONS = [
   { value: 'pending', label: 'Pending' },
@@ -18,7 +17,6 @@ const STATUS_OPTIONS = [
 ];
 
 const Inquiries = () => {
-  const { user } = useAuth();
   const [scope, setScope] = useState('received');
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -71,18 +69,6 @@ const Inquiries = () => {
           Sent by Me
         </button>
       </div>
-
-      {scope === 'received' && !user.phoneVerified && inquiries.length > 0 && (
-        <div className="mt-5 flex items-center gap-2 rounded-lg bg-gold-50 px-4 py-3 text-sm text-gold-700">
-          <ShieldCheck size={16} className="shrink-0" />
-          <span>
-            Verify your phone number to increase client trust.{' '}
-            <Link to="/verify-phone" className="font-semibold underline">
-              Verify now
-            </Link>
-          </span>
-        </div>
-      )}
 
       <div className="mt-6">
         {loading ? (

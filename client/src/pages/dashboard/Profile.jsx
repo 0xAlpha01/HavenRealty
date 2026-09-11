@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
-import { Camera, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import Input from '../../components/ui/Input';
 import Textarea from '../../components/ui/Textarea';
 import Button from '../../components/ui/Button';
@@ -62,43 +61,6 @@ const Profile = () => {
     <div>
       <h1 className="text-2xl font-bold text-navy-900">My Profile</h1>
       <p className="mt-1 text-sm text-slate-500">Update your personal information</p>
-
-      <div className="card mt-6 max-w-2xl space-y-4 p-6">
-        <h2 className="text-sm font-semibold text-navy-900">Verification Status</h2>
-
-        <div className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-3">
-          <div>
-            <p className="text-sm font-medium text-navy-900">Email</p>
-            <p className="text-xs text-slate-500">{user.email}</p>
-          </div>
-          <span className="flex items-center gap-1 text-sm font-medium text-emerald-600">
-            <CheckCircle2 size={15} /> Verified
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-3">
-          <div>
-            <p className="text-sm font-medium text-navy-900">Phone Number</p>
-            <p className="text-xs text-slate-500">{user.phone}</p>
-          </div>
-          {user.phoneVerified ? (
-            <span className="flex items-center gap-1 text-sm font-medium text-emerald-600">
-              <CheckCircle2 size={15} /> Verified
-            </span>
-          ) : (
-            <Link to="/verify-phone" className="btn-outline">
-              <ShieldCheck size={15} /> Verify Phone Number
-            </Link>
-          )}
-        </div>
-
-        {!user.phoneVerified && (
-          <p className="rounded-lg bg-gold-50 px-3 py-2 text-xs text-gold-700">
-            Phone verification is optional. Verify your phone number when you&apos;re ready to build additional
-            trust with clients.
-          </p>
-        )}
-      </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="card mt-6 max-w-2xl space-y-5 p-6">
         <div className="flex items-center gap-4">

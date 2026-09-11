@@ -18,22 +18,6 @@ const forgotPasswordLimiter = makeLimiter(
   'forgotPassword'
 );
 
-const phoneOtpRequestLimiter = makeLimiter(
-  60 * 60 * 1000,
-  5,
-  'Too many verification code requests. Please try again later.',
-  'phoneOtpRequest'
-);
-
-const phoneOtpVerifyLimiter = makeLimiter(
-  15 * 60 * 1000,
-  10,
-  'Too many verification attempts. Please try again later.',
-  'phoneOtpVerify'
-);
-
 module.exports = {
   forgotPasswordLimiter,
-  phoneOtpRequestLimiter,
-  phoneOtpVerifyLimiter,
 };

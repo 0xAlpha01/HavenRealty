@@ -19,7 +19,6 @@ const About = lazy(() => import('./pages/About'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
-const VerifyPhone = lazy(() => import('./pages/VerifyPhone'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -61,10 +60,6 @@ const App = () => (
         </Route>
 
         <Route element={<ProtectedRoute />}>
-          <Route element={<MainLayout />}>
-            <Route path="/verify-phone" element={<VerifyPhone />} />
-          </Route>
-
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<DashboardOverview />} />
             <Route path="/dashboard/properties" element={<MyProperties />} />

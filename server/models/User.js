@@ -1,11 +1,9 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
-const { generateSecureToken, generateOTP, hashValue } = require('../utils/tokens');
+const { generateSecureToken, hashValue } = require('../utils/tokens');
 
-const PHONE_OTP_EXPIRY_MINUTES = 10;
 const PASSWORD_RESET_EXPIRY_MINUTES = 15;
-const MAX_PHONE_OTP_ATTEMPTS = 5;
 
 const userSchema = new mongoose.Schema(
   {
@@ -49,12 +47,6 @@ const userSchema = new mongoose.Schema(
     isAgent: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
 
-    phoneVerified: { type: Boolean, default: false },
-
-    phoneVerificationOTPHash: { type: String, select: false },
-    phoneVerificationOTPExpires: { type: Date, select: false },
-    phoneVerificationAttempts: { type: Number, default: 0, select: false },
-
     passwordResetTokenHash: { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
 
@@ -82,21 +74,10 @@ userSchema.methods.comparePassword = function comparePassword(candidatePassword)
 userSchema.methods.toSafeObject = function toSafeObject() {
   const obj = this.toObject();
   delete obj.password;
-  delete obj.phoneVerificationOTPHash;
-  delete obj.phoneVerificationOTPExpires;
-  delete obj.phoneVerificationAttempts;
   delete obj.passwordResetTokenHash;
   delete obj.passwordResetExpires;
   delete obj.passwordChangedAt;
   return obj;
-};
-
-userSchema.methods.createPhoneVerificationOTP = function createPhoneVerificationOTP() {
-  const { otp, otpHash } = generateOTP();
-  this.phoneVerificationOTPHash = otpHash;
-  this.phoneVerificationOTPExpires = new Date(Date.now() + PHONE_OTP_EXPIRY_MINUTES * 60 * 1000);
-  this.phoneVerificationAttempts = 0;
-  return otp;
 };
 
 userSchema.methods.createPasswordResetToken = function createPasswordResetToken() {
@@ -107,6 +88,5 @@ userSchema.methods.createPasswordResetToken = function createPasswordResetToken(
 };
 
 userSchema.statics.hashValue = hashValue;
-userSchema.statics.MAX_PHONE_OTP_ATTEMPTS = MAX_PHONE_OTP_ATTEMPTS;
 
 module.exports = mongoose.model('User', userSchema);

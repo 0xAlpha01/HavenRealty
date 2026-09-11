@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { BadgeCheck, Calendar, Mail, MapPin, Phone } from 'lucide-react';
+import { Calendar, Mail, MapPin, Phone } from 'lucide-react';
 import PropertyGrid from '../components/property/PropertyGrid';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import agentService from '../services/agentService';
@@ -53,11 +53,6 @@ const AgentProfile = () => {
         <div className="flex-1 text-center sm:text-left">
           <h1 className="flex items-center justify-center gap-2 text-2xl font-bold text-navy-900 sm:justify-start">
             {agent.fullName}
-            {agent.phoneVerified && (
-              <span className="badge bg-emerald-50 text-emerald-700">
-                <BadgeCheck size={13} className="mr-1" /> Verified Agent
-              </span>
-            )}
           </h1>
           {agent.location && (
             <p className="mt-1 flex items-center justify-center gap-1 text-sm text-slate-500 sm:justify-start">
