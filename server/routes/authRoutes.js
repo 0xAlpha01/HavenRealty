@@ -5,8 +5,6 @@ const {
   logout,
   getMe,
   getVerificationStatus,
-  verifyEmail,
-  resendVerification,
   sendPhoneOtp,
   resendPhoneOtp,
   verifyPhoneOtp,
@@ -19,7 +17,6 @@ const { protect, optionalAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const {
   forgotPasswordLimiter,
-  resendVerificationLimiter,
   phoneOtpRequestLimiter,
   phoneOtpVerifyLimiter,
 } = require('../middleware/rateLimiters');
@@ -31,9 +28,6 @@ router.post('/login', login);
 router.post('/logout', protect, logout);
 router.get('/me', protect, getMe);
 router.get('/verification-status', getVerificationStatus);
-
-router.post('/verify-email', verifyEmail);
-router.post('/resend-verification', resendVerificationLimiter, optionalAuth, resendVerification);
 
 router.post('/send-phone-otp', phoneOtpRequestLimiter, optionalAuth, sendPhoneOtp);
 router.post('/resend-phone-otp', phoneOtpRequestLimiter, optionalAuth, resendPhoneOtp);

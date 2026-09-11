@@ -16,27 +16,6 @@ const emailShell = (bodyHtml) => `
 </div>
 `;
 
-const verificationEmailTemplate = ({ name, verificationUrl, expiresInMinutes = 30 }) =>
-  emailShell(`
-    <h2 style="margin:0 0 16px;font-size:20px;color:#16233c;">Verify your Haven Realty account</h2>
-    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;">Hi ${name},</p>
-    <p style="margin:0 0 24px;font-size:14px;line-height:1.6;">
-      Thanks for signing up. Please confirm your email address to activate your account.
-    </p>
-    <div style="text-align:center;margin:0 0 24px;">
-      <a href="${verificationUrl}" style="display:inline-block;background-color:#e6a92f;color:#16233c;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none;">
-        Verify Email Address
-      </a>
-    </div>
-    <p style="margin:0 0 8px;font-size:13px;color:#4b5563;line-height:1.6;">
-      Or copy and paste this link into your browser:<br/>
-      <a href="${verificationUrl}" style="color:#37578a;word-break:break-all;">${verificationUrl}</a>
-    </p>
-    <p style="margin:20px 0 0;font-size:12px;color:#9ca3af;">
-      This link expires in ${expiresInMinutes} minutes. For your security, never share this link with anyone.
-    </p>
-  `);
-
 const passwordResetEmailTemplate = ({ name, resetUrl, expiresInMinutes = 15 }) =>
   emailShell(`
     <h2 style="margin:0 0 16px;font-size:20px;color:#16233c;">Reset your Haven Realty password</h2>
@@ -77,4 +56,4 @@ const phoneOtpEmailTemplate = ({ name, otp, maskedPhone, expiresInMinutes = 10 }
     </p>
   `);
 
-module.exports = { verificationEmailTemplate, passwordResetEmailTemplate, phoneOtpEmailTemplate };
+module.exports = { passwordResetEmailTemplate, phoneOtpEmailTemplate };

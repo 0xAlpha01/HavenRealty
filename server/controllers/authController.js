@@ -7,7 +7,6 @@ const smsService = require('../services/smsService');
 const { uploadImage, deleteImage } = require('../utils/uploadImage');
 const { hashValue, maskPhone } = require('../utils/tokens');
 const {
-  verificationEmailTemplate,
   passwordResetEmailTemplate,
   phoneOtpEmailTemplate,
 } = require('../utils/emailTemplates');
@@ -15,12 +14,10 @@ const {
 const sanitizeUser = (user) => user.toSafeObject();
 
 const GENERIC_RESET_MESSAGE = 'If an account exists with this email, a password reset link has been sent.';
-const GENERIC_RESEND_MESSAGE =
-  'If an account with this email exists and is not yet verified, a new verification email has been sent.';
 
 // Finds the acting user either from an authenticated request (optionalAuth)
-// or by the email supplied in the request body, so verification/resend flows
-// work both mid-session and right after registration (no token issued yet).
+// or by the email supplied in the request body, so verification flows work
+// both mid-session and right after registration.
 const resolveUserByAuthOrEmail = async (req, { selectExtra = '' } = {}) => {
   if (req.user) {
     return selectExtra ? User.findById(req.user._id).select(selectExtra) : req.user;
@@ -31,25 +28,6 @@ const resolveUserByAuthOrEmail = async (req, { selectExtra = '' } = {}) => {
 
   const query = User.findOne({ email: email.toLowerCase() });
   return selectExtra ? query.select(selectExtra) : query;
-};
-
-const sendVerificationEmail = async (user, rawToken) => {
-  const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${rawToken}`;
-  await sendEmail({
-    to: user.email,
-    subject: 'Verify your Haven Realty account',
-    html: verificationEmailTemplate({ name: user.fullName, verificationUrl }),
-  });
-};
-
-// Fires the email in the background instead of blocking the HTTP response on
-// the SMTP round-trip. sendEmail() already catches its own errors, but this
-// .catch is a safety net in case that ever changes - a failed send must
-// never surface as an unhandled rejection or affect the response already sent.
-const sendVerificationEmailInBackground = (user, rawToken) => {
-  sendVerificationEmail(user, rawToken).catch((error) => {
-    console.error(`Failed to send verification email to ${user.email}: ${error.message}`);
-  });
 };
 
 // Tries SMS first; if that's skipped (Termii not configured, not approved,
@@ -105,20 +83,14 @@ const register = asyncHandler(async (req, res) => {
     role: 'user',
   });
 
-  // Only email verification is required to use the platform - phone
-  // verification is an optional trust signal a user can add later from
+  // Phone verification is an optional trust signal a user can add later from
   // their profile, so no OTP is sent (and Termii isn't touched) at
   // registration time.
-  const emailToken = user.createEmailVerificationToken();
   await user.save();
-
-  // The account already exists at this point - don't make the client wait
-  // on SMTP delivery, which can be slow or unreachable, to get its response.
-  sendVerificationEmailInBackground(user, emailToken);
 
   res.status(201).json({
     success: true,
-    message: 'Registration successful. Please verify your email to activate your account.',
+    message: 'Registration successful. You can now log in.',
     data: { userId: user._id, email: user.email, phone: user.phone },
   });
 });
@@ -147,16 +119,7 @@ const login = asyncHandler(async (req, res) => {
     throw new ApiError(401, 'Invalid email or password');
   }
 
-  if (!user.emailVerified) {
-    return res.status(403).json({
-      success: false,
-      message: 'Please verify your email before logging in.',
-      data: { requiresEmailVerification: true, email: user.email },
-    });
-  }
-
-  // Phone verification is optional and never gates login - only email
-  // verification is required.
+  // Phone verification is optional and never gates login.
   const token = generateToken(user._id);
 
   res.status(200).json({
@@ -180,7 +143,7 @@ const getMe = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: { user: sanitizeUser(req.user) } });
 });
 
-// @desc    Check email/phone verification status (no sensitive data)
+// @desc    Check phone verification status (no sensitive data)
 // @route   GET /api/auth/verification-status
 // @access  Public
 const getVerificationStatus = asyncHandler(async (req, res) => {
@@ -189,63 +152,14 @@ const getVerificationStatus = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Email is required');
   }
 
-  const user = await User.findOne({ email: email.toLowerCase() }).select('emailVerified phoneVerified');
+  const user = await User.findOne({ email: email.toLowerCase() }).select('phoneVerified');
 
   res.status(200).json({
     success: true,
     data: {
-      emailVerified: Boolean(user?.emailVerified),
       phoneVerified: Boolean(user?.phoneVerified),
     },
   });
-});
-
-// @desc    Verify a user's email address
-// @route   POST /api/auth/verify-email
-// @access  Public
-const verifyEmail = asyncHandler(async (req, res) => {
-  const { token } = req.body;
-  if (!token) {
-    throw new ApiError(400, 'Verification token is required');
-  }
-
-  const tokenHash = hashValue(token);
-  const user = await User.findOne({
-    emailVerificationTokenHash: tokenHash,
-    emailVerificationExpires: { $gt: new Date() },
-  }).select('+emailVerificationTokenHash +emailVerificationExpires');
-
-  if (!user) {
-    throw new ApiError(400, 'Verification link is invalid or has expired.');
-  }
-
-  user.emailVerified = true;
-  user.emailVerificationTokenHash = undefined;
-  user.emailVerificationExpires = undefined;
-  await user.save();
-
-  res.status(200).json({
-    success: true,
-    message: 'Email verified successfully',
-    data: { emailVerified: true, phoneVerified: user.phoneVerified, email: user.email, phone: user.phone },
-  });
-});
-
-// @desc    Resend the email verification link
-// @route   POST /api/auth/resend-verification
-// @access  Public/Private (identified by session or email)
-const resendVerification = asyncHandler(async (req, res) => {
-  const user = await resolveUserByAuthOrEmail(req, {
-    selectExtra: '+emailVerificationTokenHash +emailVerificationExpires',
-  });
-
-  if (user && !user.emailVerified) {
-    const rawToken = user.createEmailVerificationToken();
-    await user.save();
-    sendVerificationEmailInBackground(user, rawToken);
-  }
-
-  res.status(200).json({ success: true, message: GENERIC_RESEND_MESSAGE });
 });
 
 // @desc    Send a phone verification OTP
@@ -339,7 +253,7 @@ const verifyPhoneOtp = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Phone number verified successfully',
-    data: { emailVerified: user.emailVerified, phoneVerified: true },
+    data: { phoneVerified: true },
   });
 });
 
@@ -470,8 +384,6 @@ module.exports = {
   logout,
   getMe,
   getVerificationStatus,
-  verifyEmail,
-  resendVerification,
   sendPhoneOtp,
   resendPhoneOtp,
   verifyPhoneOtp,

@@ -18,13 +18,6 @@ const forgotPasswordLimiter = makeLimiter(
   'forgotPassword'
 );
 
-const resendVerificationLimiter = makeLimiter(
-  60 * 60 * 1000,
-  5,
-  'Too many verification email requests. Please try again later.',
-  'resendVerification'
-);
-
 const phoneOtpRequestLimiter = makeLimiter(
   60 * 60 * 1000,
   5,
@@ -41,7 +34,6 @@ const phoneOtpVerifyLimiter = makeLimiter(
 
 module.exports = {
   forgotPasswordLimiter,
-  resendVerificationLimiter,
   phoneOtpRequestLimiter,
   phoneOtpVerifyLimiter,
 };
