@@ -1,8 +1,8 @@
-# Haven Realty — Full-Stack Real Estate Marketplace
+# Haven Realty  Full-Stack Real Estate Marketplace
 
 A production-ready real estate marketplace built with the MERN stack (MongoDB, Express, React, Node). Users can browse, search, and filter properties, save favorites, contact agents, and list their own properties. Admins moderate listings, manage users, and view platform analytics.
 
-There is **no payment system** — this platform is strictly for property discovery, listing management, and communication.
+There is **no payment system**  this platform is strictly for property discovery, listing management, and communication.
 
 ## Features
 
@@ -81,13 +81,6 @@ JWT_EXPIRES_IN=7d
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
-
-SMTP_HOST=
-SMTP_PORT=465
-SMTP_SECURE=true
-SMTP_USER=
-SMTP_PASS=
-EMAIL_FROM="Real Estate Platform <no-reply@realestate.local>"
 
 CLIENT_URL=http://localhost:5173
 
